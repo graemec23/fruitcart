@@ -2,13 +2,16 @@ import React, { useState, FormEvent } from 'react';
 import CartRow from './CartRow';
 
 import products from '../api/products.json';
+import discounts from '../api/discounts.json'
 
-import { ProductType } from '../interface';
+import { ProductType, DiscountType } from '../interface';
 
 
 const Cart = () => {
-  const [scannedItems, setScannedItems] = useState<string>('')
-  const [cartItems, setCartItems] = useState<ProductType[]>([])
+  const [scannedItems, setScannedItems] = useState<string>('');
+  const [cartItems, setCartItems] = useState<ProductType[]>([]);
+
+  const [discountItems] = useState<DiscountType[]>(discounts);
 
    const itemCount = cartItems.reduce(
     (accumulator, currentValue) => accumulator + currentValue.quantity,
@@ -58,17 +61,53 @@ const Cart = () => {
       })
     );
 
-    console.log(scannedItems.length)
 
-      if(scannedItems.length){
-        setCartItems(addProductsToCart)
-      }
+    if(scannedItems.length){
+      setCartItems(addProductsToCart)
+    }
 
   }
 
   const getTotalValue = cartItems.reduce(
     (acc, currentValue) => acc + currentValue.quantity * currentValue.price,
     0
+  );
+
+  const quantityById = (productId: number) =>
+  cartItems
+    .filter((item) => item.id === productId)
+    .map((item) => item.quantity);
+
+const getQuantityAfterDiscount = (productId: number) => {
+  let discount = discountItems.filter(
+    (item: DiscountType) => item.id === productId
+  )[0];
+
+  if (discount) {
+    let div = Math.trunc(Number(quantityById(discount.id)) / discount.get)
+    let remanding = Number(quantityById(productId)) % discount.get
+    return div * discount.pay + remanding || 0
+  }
+
+  return quantityById(productId) || 0
+}
+
+const getTotalAfterDiscountValue = cartItems.reduce(
+  (acc, currentValue) =>
+    acc +
+    currentValue.price * Number(getQuantityAfterDiscount(currentValue.id)),
+  0
+);
+
+const getActiveDiscounts = () =>
+  discounts.filter((discount) =>
+    cartItems.some((cart) => {
+      if (discount.id === cart.id && cart.quantity >= discount.get) {
+        return discount
+      }
+
+      return null
+    })
   );
 
 
@@ -135,6 +174,7 @@ const Cart = () => {
                 product={product}
                 handleRemoveProduct={handleRemoveProduct}
                 handleQuantityChange={handleQuantityChange}
+                getQuantityAfterDiscount={getQuantityAfterDiscount}
               />
             ))}
           </div>
@@ -150,10 +190,27 @@ const Cart = () => {
               <span className="font-semibold text-sm"></span>
             </div>
 
+            {getActiveDiscounts().length > 0 && (
+              <div className="border-t mt-8">
+                <div className="flex font-semibold justify-between py-6 text-sm uppercase">
+                  <span>Cost before discount</span>
+                  <span>£{getTotalValue.toFixed(2)}</span>
+                </div>
+                <div className="flex font-semibold justify-between py-6 text-sm uppercase">
+                  <span>Discounts applied</span>
+                </div>
+                <div>
+                  {getActiveDiscounts().map((item) => (
+                    <div className="text-sm text-red-700">{item.title}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="border-t mt-8">
               <div className="flex font-semibold justify-between py-6 text-sm uppercase">
                 <span>Total cost</span>
-                <span>£{getTotalValue.toFixed(2)}</span>
+                <span>£{getTotalAfterDiscountValue.toFixed(2)}</span>
               </div>
               <button className="bg-indigo-500 font-semibold hover:bg-indigo-600 py-3 text-sm text-white uppercase w-full">
                 Checkout

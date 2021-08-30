@@ -1,12 +1,12 @@
 import React, { FunctionComponent } from 'react';
 
-
 import { CartType } from '../interface';
 
 const CartRow: FunctionComponent<CartType> = ({
   product,
   handleRemoveProduct,
   handleQuantityChange,
+  getQuantityAfterDiscount
 }) => {
   return (
     <>
@@ -17,7 +17,6 @@ const CartRow: FunctionComponent<CartType> = ({
       <div className="flex w-2/5">
         <div className="flex flex-col justify-between ml-4 flex-grow">
           <span className="font-bold text-sm">{product.title}</span>
-          {/* <span className="text-red-500 text-xs">Apple</span> */}
           <a
             title="remove item"
             onClick={(e) => handleRemoveProduct(e, product.id)}
@@ -61,20 +60,14 @@ const CartRow: FunctionComponent<CartType> = ({
       </span>
       <span className="text-center w-1/5 font-semibold text-sm">
         £
-        {(product.price * Number(product.quantity)).toFixed(
+        {(product.price * Number(getQuantityAfterDiscount(product.id))).toFixed(
           2
         )}
       </span>
     </div>
       )
     }
-
     </>
-
-
-
-
-
   )
 }
 

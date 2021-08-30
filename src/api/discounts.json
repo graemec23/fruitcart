@@ -1,0 +1,4 @@
+[
+    { "id": 1, "get": 2, "pay": 1, "title": "buy one, get one free on Apples" },
+    { "id": 2, "get": 3, "pay": 2, "title": "3 for the price of 2 on Oranges" }
+  ]
